@@ -30,32 +30,32 @@ const PREVIEW_TRANSITION = {
 function layoutsForFocus(focus: number | null): CardLayout[] {
   const idle: CardLayout[] = [
     { x: 0, y: 0, scale: 1, opacity: 1, zIndex: 30 },
-    { x: -12, y: 24, scale: 0.985, opacity: 1, zIndex: 20 },
-    { x: -24, y: 48, scale: 0.97, opacity: 1, zIndex: 10 },
+    { x: -8, y: 16, scale: 0.99, opacity: 1, zIndex: 20 },
+    { x: -16, y: 32, scale: 0.98, opacity: 1, zIndex: 10 },
   ];
 
   if (focus === null) return idle;
 
   if (focus === 0) {
     return [
-      { x: 0, y: -4, scale: 1.015, opacity: 1, zIndex: 40 },
-      { x: -8, y: 64, scale: 1, opacity: 1, zIndex: 25 },
-      { x: -18, y: 108, scale: 1, opacity: 1, zIndex: 15 },
+      { x: 0, y: -2, scale: 1.01, opacity: 1, zIndex: 40 },
+      { x: -6, y: 28, scale: 1, opacity: 1, zIndex: 25 },
+      { x: -12, y: 52, scale: 1, opacity: 1, zIndex: 15 },
     ];
   }
 
   if (focus === 1) {
     return [
-      { x: -4, y: 6, scale: 0.98, opacity: 1, zIndex: 15 },
-      { x: -12, y: 18, scale: 1.015, opacity: 1, zIndex: 40 },
-      { x: -20, y: 70, scale: 1, opacity: 1, zIndex: 28 },
+      { x: -2, y: 4, scale: 0.98, opacity: 1, zIndex: 15 },
+      { x: -8, y: 12, scale: 1.01, opacity: 1, zIndex: 40 },
+      { x: -14, y: 44, scale: 1, opacity: 1, zIndex: 28 },
     ];
   }
 
   return [
-    { x: -4, y: 2, scale: 0.975, opacity: 1, zIndex: 12 },
-    { x: -10, y: 14, scale: 0.98, opacity: 1, zIndex: 22 },
-    { x: -26, y: 40, scale: 1.015, opacity: 1, zIndex: 40 },
+    { x: -2, y: 2, scale: 0.98, opacity: 1, zIndex: 12 },
+    { x: -6, y: 10, scale: 0.98, opacity: 1, zIndex: 22 },
+    { x: -18, y: 24, scale: 1.01, opacity: 1, zIndex: 40 },
   ];
 }
 
@@ -151,7 +151,7 @@ export function GatePreviewStack({ posts }: GatePreviewStackProps) {
             <motion.div
               key={`${card.username}-${index}`}
               className="gate-preview-card-wrap"
-              style={{ zIndex: layout.zIndex }}
+              style={{ zIndex: layout.zIndex, willChange: "transform" }}
               initial={{ opacity: 0, y: layout.y + 40, scale: 0.95 }}
               animate={{
                 x: layout.x,

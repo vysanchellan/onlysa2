@@ -65,14 +65,13 @@ export function TestimonialCard({
     <motion.a
       href={tweetUrl} target="_blank" rel="noopener noreferrer"
       onClick={handleClick} onMouseEnter={onHover} onMouseLeave={onLeave}
-      layout
       className={cn(
         gatePreview
           ? "relative flex h-auto min-h-[172px] w-[252px] max-w-[252px]"
           : compact
             ? "relative flex h-auto min-h-[96px] w-[168px] max-w-full"
             : "relative flex h-auto min-h-[160px] sm:min-h-[200px] w-[280px] sm:w-[400px]",
-        "-skew-y-[5deg] select-none flex-col rounded-2xl cursor-pointer",
+        gatePreview ? "select-none flex-col rounded-2xl cursor-pointer" : "-skew-y-[5deg] select-none flex-col rounded-2xl cursor-pointer",
         isActive && "ring-2 ring-[#60A5FA]/40",
         className
       )}
