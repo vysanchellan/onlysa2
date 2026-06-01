@@ -131,7 +131,7 @@ export function SpiralGateScreen({ onEnter, posts }: SpiralGateScreenProps) {
                 NGENA
               </motion.button>
               <p className="ngena-whisper">
-                enter · come in · isiZulu
+                anonymous · unfiltered · yours
               </p>
             </motion.div>
           </div>
