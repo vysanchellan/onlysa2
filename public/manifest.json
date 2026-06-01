@@ -1,0 +1,26 @@
+{
+  "name": "OnlySA",
+  "short_name": "OnlySA",
+  "description": "Anonymous hyperlocal social platform for South Africa",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#080808",
+  "background_color": "#080808",
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "news"],
+  "lang": "en-ZA"
+}
