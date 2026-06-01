@@ -70,133 +70,134 @@ export function GlassPostCard({ post, index = 0 }: GlassPostCardProps) {
   );
 
   return (
-    <motion.article
-      id={`post-${post.id}`}
-      initial={{ opacity: 0, y: 28 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        delay: index * 0.04,
-        duration: 0.55,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-      whileHover={{ scale: 1.012 }}
-      className={`premium-post-card ${sizeClass} ${isHot ? "is-hot" : ""}`}
-    >
-      <div className="premium-card-glow" aria-hidden />
-      <div className="premium-card-inner">
-        <header className="premium-card-header">
-          <div className="premium-badges">
-            <span
-              className="premium-cat-badge"
-              style={{ background: cat.bg, color: cat.color, borderColor: `${cat.color}44` }}
-            >
-              {cat.label}
-            </span>
-            <span className="premium-meta-dot" aria-hidden>
-              ·
-            </span>
-            <span className="premium-time">{timeAgo(post.createdAt)}</span>
-            {isHot && <span className="hot-typo-badge">HOT</span>}
-          </div>
-          <span className="premium-location">{formatLocation(post.area)}</span>
-        </header>
-
-        <p className="premium-anon">{anonLabel}</p>
-
-        <Link href={`/post/${post.id}`} className="premium-body-link">
-          <p className="premium-body">
-            {body}
-            {long && !expanded && (
-              <button
-                type="button"
-                className="premium-read-more"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setExpanded(true);
-                }}
+    <>
+      <motion.article
+        id={`post-${post.id}`}
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          delay: index * 0.04,
+          duration: 0.55,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+        whileHover={{ scale: 1.012 }}
+        className={`premium-post-card ${sizeClass} ${isHot ? "is-hot" : ""}`}
+      >
+        <div className="premium-card-glow" aria-hidden />
+        <div className="premium-card-inner">
+          <header className="premium-card-header">
+            <div className="premium-badges">
+              <span
+                className="premium-cat-badge"
+                style={{ background: cat.bg, color: cat.color, borderColor: `${cat.color}44` }}
               >
-                read more
-              </button>
-            )}
-          </p>
-        </Link>
-
-        {gifUrl && (
-          <div
-            className="premium-gif"
-            onClick={() => setGifPaused((p) => !p)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === "Enter" && setGifPaused((p) => !p)}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={gifUrl} alt="" />
-            <span className="premium-gif-tag">GIF</span>
-            {gifPaused && (
-              <span className="premium-gif-play">
-                <Play size={24} fill="white" />
+                {cat.label}
               </span>
-            )}
-          </div>
-        )}
+              <span className="premium-meta-dot" aria-hidden>
+                ·
+              </span>
+              <span className="premium-time">{timeAgo(post.createdAt)}</span>
+              {isHot && <span className="hot-typo-badge">HOT</span>}
+            </div>
+            <span className="premium-location">{formatLocation(post.area)}</span>
+          </header>
 
-        <footer className="premium-actions">
-          <motion.button
-            type="button"
-            className={`premium-action upvote ${upvoted ? "voted" : ""}`}
-            onClick={handleUpvote}
-            whileTap={{ scale: 0.92 }}
-          >
-            <Triangle size={13} fill={upvoted ? "#60A5FA" : "transparent"} />
-            <AnimatePresence mode="popLayout">
-              <motion.span
-                key={upvotes}
-                initial={{ y: -8, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 8, opacity: 0 }}
-                transition={{ duration: 0.15 }}
-              >
-                {upvotes}
-              </motion.span>
-            </AnimatePresence>
-          </motion.button>
+          <p className="premium-anon">{anonLabel}</p>
 
-          <Link href={`/post/${post.id}`} className="premium-action">
-            <MessageCircle size={14} />
-            <span>{post.comments}</span>
+          <Link href={`/post/${post.id}`} className="premium-body-link">
+            <p className="premium-body">
+              {body}
+              {long && !expanded && (
+                <button
+                  type="button"
+                  className="premium-read-more"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setExpanded(true);
+                  }}
+                >
+                  read more
+                </button>
+              )}
+            </p>
           </Link>
 
-          <button
-            type="button"
-            className="premium-action"
-            onClick={() => {
-              const url = `${window.location.origin}/post/${post.id}`;
-              window.open(
-                `https://wa.me/?text=${encodeURIComponent(`OnlySA: ${url}`)}`,
-                "_blank"
-              );
-            }}
-            aria-label="Share"
-          >
-            <Share2 size={14} />
-          </button>
+          {gifUrl && (
+            <div
+              className="premium-gif"
+              onClick={() => setGifPaused((p) => !p)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && setGifPaused((p) => !p)}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={gifUrl} alt="" />
+              <span className="premium-gif-tag">GIF</span>
+              {gifPaused && (
+                <span className="premium-gif-play">
+                  <Play size={24} fill="white" />
+                </span>
+              )}
+            </div>
+          )}
 
-          <button
-            type="button"
-            className="premium-action"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setChallengeTarget(post.identity || "Anonymous"); }}
-            aria-label="Challenge"
-            title={`Challenge ${post.identity || "Anonymous"}`}
-          >
-            <Swords size={12} />
-          </button>
-        </footer>
-      </div>
+          <footer className="premium-actions">
+            <motion.button
+              type="button"
+              className={`premium-action upvote ${upvoted ? "voted" : ""}`}
+              onClick={handleUpvote}
+              whileTap={{ scale: 0.92 }}
+            >
+              <Triangle size={13} fill={upvoted ? "#60A5FA" : "transparent"} />
+              <AnimatePresence mode="popLayout">
+                <motion.span
+                  key={upvotes}
+                  initial={{ y: -8, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: 8, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {upvotes}
+                </motion.span>
+              </AnimatePresence>
+            </motion.button>
+
+            <Link href={`/post/${post.id}`} className="premium-action">
+              <MessageCircle size={14} />
+              <span>{post.comments}</span>
+            </Link>
+
+            <button
+              type="button"
+              className="premium-action"
+              onClick={() => {
+                const url = `${window.location.origin}/post/${post.id}`;
+                window.open(
+                  `https://wa.me/?text=${encodeURIComponent(`OnlySA: ${url}`)}`,
+                  "_blank"
+                );
+              }}
+              aria-label="Share"
+            >
+              <Share2 size={14} />
+            </button>
+
+            <button
+              type="button"
+              className="premium-action"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setChallengeTarget(post.identity || "Anonymous"); }}
+              aria-label="Challenge"
+              title={`Challenge ${post.identity || "Anonymous"}`}
+            >
+              <Swords size={12} />
+            </button>
+          </footer>
+        </div>
+      </motion.article>
       <ChallengeModal
         open={!!challengeTarget}
         onClose={() => setChallengeTarget(null)}
         challengedIdentity={challengeTarget || ""}
       />
-    </motion.article>
+    </>
   );
-}

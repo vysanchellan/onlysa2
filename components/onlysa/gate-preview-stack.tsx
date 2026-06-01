@@ -21,9 +21,10 @@ type CardLayout = {
 const PREVIEW_EASE = [0.22, 1, 0.36, 1] as const;
 
 const PREVIEW_TRANSITION = {
-  type: "tween" as const,
-  duration: 0.2,
-  ease: PREVIEW_EASE,
+  type: "spring" as const,
+  stiffness: 300,
+  damping: 28,
+  mass: 0.5,
 };
 
 function layoutsForFocus(focus: number | null): CardLayout[] {
