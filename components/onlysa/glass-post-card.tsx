@@ -3,11 +3,12 @@
 import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Triangle, MessageCircle, Share2, Flag, Play } from "lucide-react";
+import { Triangle, MessageCircle, Share2, Swords, Play } from "lucide-react";
 import { Post } from "@/types";
 import { timeAgo, getSessionToken, truncate } from "@/lib/utils";
 import { CATEGORY_STYLES, formatLocation } from "@/lib/constants";
 import { getAnonId } from "@/lib/engagement";
+import { ChallengeModal } from "@/components/onlysa/challenge-modal";
 
 interface GlassPostCardProps {
   post: Post;
@@ -26,6 +27,7 @@ export function GlassPostCard({ post, index = 0 }: GlassPostCardProps) {
   const [upvoted, setUpvoted] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [gifPaused, setGifPaused] = useState(false);
+  const [challengeTarget, setChallengeTarget] = useState<string | null>(null);
 
   const cat = CATEGORY_STYLES[post.category] ?? CATEGORY_STYLES["Hot Take"];
   const isHot = post.upvotes > 100 || post.isHot;
@@ -179,11 +181,22 @@ export function GlassPostCard({ post, index = 0 }: GlassPostCardProps) {
             <Share2 size={14} />
           </button>
 
-          <button type="button" className="premium-action flag" aria-label="Report">
-            <Flag size={12} />
+          <button
+            type="button"
+            className="premium-action"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setChallengeTarget(post.identity || "Anonymous"); }}
+            aria-label="Challenge"
+            title={`Challenge ${post.identity || "Anonymous"}`}
+          >
+            <Swords size={12} />
           </button>
         </footer>
       </div>
+      <ChallengeModal
+        open={!!challengeTarget}
+        onClose={() => setChallengeTarget(null)}
+        challengedIdentity={challengeTarget || ""}
+      />
     </motion.article>
   );
 }
