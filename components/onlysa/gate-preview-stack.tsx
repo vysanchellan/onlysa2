@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Post } from "@/types";
 import {
@@ -18,8 +18,6 @@ type CardLayout = {
   zIndex: number;
 };
 
-const PREVIEW_EASE = [0.22, 1, 0.36, 1] as const;
-
 const PREVIEW_TRANSITION = {
   type: "spring" as const,
   stiffness: 180,
@@ -27,37 +25,11 @@ const PREVIEW_TRANSITION = {
   mass: 0.8,
 };
 
-function layoutsForFocus(focus: number | null): CardLayout[] {
-  const idle: CardLayout[] = [
-    { x: 0, y: 0, scale: 1, opacity: 1, zIndex: 30 },
-    { x: -8, y: 16, scale: 0.99, opacity: 1, zIndex: 20 },
-    { x: -16, y: 32, scale: 0.98, opacity: 1, zIndex: 10 },
-  ];
-
-  if (focus === null) return idle;
-
-  if (focus === 0) {
-    return [
-      { x: 0, y: -2, scale: 1.01, opacity: 1, zIndex: 40 },
-      { x: -6, y: 28, scale: 1, opacity: 1, zIndex: 25 },
-      { x: -12, y: 52, scale: 1, opacity: 1, zIndex: 15 },
-    ];
-  }
-
-  if (focus === 1) {
-    return [
-      { x: -2, y: 4, scale: 0.98, opacity: 1, zIndex: 15 },
-      { x: -8, y: 12, scale: 1.01, opacity: 1, zIndex: 40 },
-      { x: -14, y: 44, scale: 1, opacity: 1, zIndex: 28 },
-    ];
-  }
-
-  return [
-    { x: -2, y: 2, scale: 0.98, opacity: 1, zIndex: 12 },
-    { x: -6, y: 10, scale: 0.98, opacity: 1, zIndex: 22 },
-    { x: -18, y: 24, scale: 1.01, opacity: 1, zIndex: 40 },
-  ];
-}
+const IDLE_LAYOUTS: CardLayout[] = [
+  { x: 0, y: 0, scale: 1, opacity: 1, zIndex: 30 },
+  { x: -8, y: 16, scale: 0.99, opacity: 1, zIndex: 20 },
+  { x: -16, y: 32, scale: 0.98, opacity: 1, zIndex: 10 },
+];
 
 function postsToCards(posts: Post[]): TestimonialCardProps[] {
   return posts.slice(0, 3).map((post) => ({
@@ -115,43 +87,24 @@ interface GatePreviewStackProps {
   posts: Post[];
 }
 
-/** Smooth motion-driven 3-card stack for entry gate */
+/** Decorative 3-card stack for the landing screen — no interaction */
 export function GatePreviewStack({ posts }: GatePreviewStackProps) {
-  const [focus, setFocus] = useState<number | null>(null);
-  const [active, setActive] = useState<number | null>(null);
-
   const cards = useMemo(() => {
     const built = postsToCards(posts);
     return built.length > 0 ? built : FALLBACK_CARDS;
   }, [posts]);
 
-  const focused = focus ?? active;
-  const layouts = layoutsForFocus(focused);
-
-  const clearFocus = useCallback(() => {
-    setFocus(null);
-    setActive(null);
-  }, []);
-
-  const setCardFocus = useCallback((index: number) => {
-    setFocus(index);
-  }, []);
-
   return (
-    <div
-      className="gate-preview-stack"
-      onPointerLeave={clearFocus}
-    >
+    <div className="gate-preview-stack">
       <div className="gate-preview-grid">
         {cards.map((card, index) => {
-          const layout = layouts[index] ?? layouts[0];
-          const isFocused = focused === index;
+          const layout = IDLE_LAYOUTS[index] ?? IDLE_LAYOUTS[0];
 
           return (
             <motion.div
               key={`${card.username}-${index}`}
               className="gate-preview-card-wrap"
-              style={{ zIndex: layout.zIndex, willChange: "transform" }}
+              style={{ zIndex: layout.zIndex, willChange: "transform", pointerEvents: "none", userSelect: "none" }}
               initial={{ opacity: 0, y: layout.y + 40, scale: 0.95 }}
               animate={{
                 x: layout.x,
@@ -160,17 +113,8 @@ export function GatePreviewStack({ posts }: GatePreviewStackProps) {
                 opacity: layout.opacity,
               }}
               transition={{ delay: index * 0.07, ...PREVIEW_TRANSITION }}
-              onPointerEnter={() => setCardFocus(index)}
             >
-              <TestimonialCard
-                {...card}
-                gatePreview
-                className={isFocused ? "gate-preview-card-focused" : ""}
-                isActive={isFocused}
-                onTap={() =>
-                  setActive((prev) => (prev === index ? null : index))
-                }
-              />
+              <TestimonialCard {...card} gatePreview />
             </motion.div>
           );
         })}

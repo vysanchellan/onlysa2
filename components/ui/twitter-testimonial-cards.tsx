@@ -71,7 +71,7 @@ export function TestimonialCard({
           : compact
             ? "relative flex h-auto min-h-[96px] w-[168px] max-w-full"
             : "relative flex h-auto min-h-[160px] sm:min-h-[200px] w-[280px] sm:w-[400px]",
-        gatePreview ? "select-none flex-col rounded-2xl cursor-pointer" : "-skew-y-[5deg] select-none flex-col rounded-2xl cursor-pointer",
+        gatePreview ? "select-none flex-col rounded-2xl" : "-skew-y-[5deg] select-none flex-col rounded-2xl cursor-pointer",
         isActive && "ring-2 ring-[#60A5FA]/40",
         className
       )}
@@ -86,6 +86,8 @@ export function TestimonialCard({
         WebkitBackdropFilter: gatePreview ? undefined : "blur(20px)",
         boxShadow: gatePreview ? "0 12px 32px rgba(0,0,0,0.45)" : undefined,
         willChange: "transform",
+        pointerEvents: gatePreview ? "none" as const : undefined,
+        userSelect: gatePreview ? "none" as const : undefined,
       }}
       whileHover={gatePreview ? undefined : { scale: 1.015, transition: { duration: 0.2 } }}
       whileTap={{ scale: 0.985 }}

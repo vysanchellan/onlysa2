@@ -1884,7 +1884,9 @@ body {
   text-align: right;
   padding-right: clamp(32px, 10vw, 140px);
   z-index: 20;
-  gap: clamp(20px, 4vh, 36px);
+  gap: 24px;
+  max-width: 480px;
+  margin-left: auto;
 }
 
 .spiral-gate-header-inline {
@@ -1898,15 +1900,54 @@ body {
 
 .spiral-gate-logo {
   font-family: "Bebas Neue", sans-serif;
-  font-size: clamp(2.75rem, 9vw, 4.5rem);
+  font-size: clamp(56px, 8vw, 100px);
   letter-spacing: 0.08em;
   margin: 0;
   line-height: 0.95;
-  background: linear-gradient(135deg, #ffffff 0%, #60a5fa 100%);
+  background: linear-gradient(135deg, #F5A623 0%, #FFD97D 45%, #E8890C 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 48px rgba(96, 165, 250, 0.35));
+  filter: drop-shadow(0 0 50px rgba(245, 166, 35, 0.3));
+}
+
+.spiral-gate-separator {
+  height: 1px;
+  background: rgba(245, 166, 35, 0.3);
+  flex-shrink: 0;
+}
+
+.ngena-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 64px;
+  border-radius: 999px;
+  background: rgba(245, 166, 35, 0.07);
+  border: 1px solid rgba(245, 166, 35, 0.5);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  color: #F5A623;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 40px rgba(245, 166, 35, 0.1);
+}
+
+.ngena-whisper {
+  text-align: center;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.15em;
+  margin-top: 12px;
+  text-transform: uppercase;
+  font-weight: 400;
 }
 
 .spiral-gate-tagline {
@@ -2126,6 +2167,7 @@ body {
     text-align: center;
     padding-right: 0;
     max-width: 100%;
+    margin-left: 0;
     order: 1;
   }
 
@@ -2137,8 +2179,9 @@ body {
     align-items: center;
   }
 
-  .spiral-liquid-cta {
-    align-self: center;
+  .ngena-btn {
+    padding: 16px 48px;
+    font-size: 13px;
   }
 
   .gate-preview-stack {
