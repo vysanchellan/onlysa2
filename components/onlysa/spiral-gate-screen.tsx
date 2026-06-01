@@ -41,22 +41,18 @@ export function SpiralGateScreen({ onEnter, posts }: SpiralGateScreenProps) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4, duration: 0.85 }}
           >
-            <motion.p
-              className="spiral-gate-arena-label"
+            <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.0, duration: 0.6 }}
             >
-              The Arena
-            </motion.p>
-            <motion.p
-              className="spiral-gate-arena-desc"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.3, duration: 0.6 }}
-            >
-              Anonymous battles rage across SA
-            </motion.p>
+              <div className="text-[10px] font-[700] tracking-[0.25em] text-[rgba(255,255,255,0.35)] uppercase mb-1">
+                What SA is saying
+              </div>
+              <div className="text-[13px] font-[500] text-[rgba(255,255,255,0.5)] leading-snug">
+                Rants. Hot takes. Confessions. Reviews.
+              </div>
+            </motion.div>
             <GatePreviewStack posts={previewPosts} />
           </motion.aside>
 
@@ -80,22 +76,40 @@ export function SpiralGateScreen({ onEnter, posts }: SpiralGateScreenProps) {
               transition={{ duration: 0.5, delay: 1.5, ease: [0.22, 1, 0.36, 1] }}
             />
 
-            <div className="md:hidden w-full flex flex-col items-center gap-2">
-              <p className="spiral-gate-arena-label">The Arena</p>
-              <p className="spiral-gate-arena-desc">Anonymous battles rage across SA</p>
+            <div className="md:hidden w-full flex flex-col items-center gap-3">
+              <div className="text-center">
+                <div className="text-[10px] font-[700] tracking-[0.25em] text-[rgba(255,255,255,0.35)] uppercase mb-1">
+                  What SA is saying
+                </div>
+                <div className="text-[13px] font-[500] text-[rgba(255,255,255,0.5)] leading-snug">
+                  Rants. Hot takes. Confessions. Reviews.
+                </div>
+              </div>
               <GatePreviewStack posts={previewPosts} />
             </div>
 
-            <motion.p
-              className="spiral-gate-battle-tease"
+            <motion.div
+              className="flex flex-col gap-5"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 2.0, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             >
-              Take Battles boil. The Throne shifts. Co-sign or cross.
-              <br />
-              <span className="text-[rgba(255,255,255,0.25)]">Anonymous. Unfiltered. Yours.</span>
-            </motion.p>
+              <p className="text-[13px] text-[rgba(255,255,255,0.45)] leading-[1.7] tracking-wide max-w-[340px]">
+                Post anything. No name attached. No face exposed.<br />
+                Just your raw, unfiltered South African voice.
+              </p>
+
+              <div className="flex items-start gap-3 pl-3 border-l border-[rgba(245,166,35,0.25)]">
+                <div>
+                  <div className="text-[10px] font-[700] tracking-[0.2em] uppercase text-[#F5A623] mb-0.5">
+                    The Arena
+                  </div>
+                  <div className="text-[12px] text-[rgba(255,255,255,0.35)] leading-snug">
+                    Challenge anyone. Take Battles. The Throne. Co-sign or cross.
+                  </div>
+                </div>
+              </div>
+            </motion.div>
 
             <motion.div
               className="spiral-gate-enter-block"
@@ -108,7 +122,7 @@ export function SpiralGateScreen({ onEnter, posts }: SpiralGateScreenProps) {
                 onClick={onEnter}
                 whileHover={{
                   scale: 1.04,
-                  boxShadow: "0 0 60px rgba(96,165,250,0.25), inset 0 1px 0 rgba(255,255,255,0.1)"
+                  boxShadow: "0 0 60px rgba(245,166,35,0.25), inset 0 1px 0 rgba(255,255,255,0.1)"
                 }}
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
@@ -117,7 +131,7 @@ export function SpiralGateScreen({ onEnter, posts }: SpiralGateScreenProps) {
                 NGENA
               </motion.button>
               <p className="ngena-whisper">
-                ngena — enter · come in · isiZulu
+                enter · come in · isiZulu
               </p>
             </motion.div>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Post } from "@/types";
 import {
@@ -9,27 +9,6 @@ import {
 } from "@/components/ui/twitter-testimonial-cards";
 import { timeAgo } from "@/lib/utils";
 import { getProvince } from "@/lib/constants";
-
-type CardLayout = {
-  x: number;
-  y: number;
-  scale: number;
-  opacity: number;
-  zIndex: number;
-};
-
-const PREVIEW_TRANSITION = {
-  type: "spring" as const,
-  stiffness: 180,
-  damping: 24,
-  mass: 0.8,
-};
-
-const IDLE_LAYOUTS: CardLayout[] = [
-  { x: 0, y: 0, scale: 1, opacity: 1, zIndex: 30 },
-  { x: -8, y: 16, scale: 0.99, opacity: 1, zIndex: 20 },
-  { x: -16, y: 32, scale: 0.98, opacity: 1, zIndex: 10 },
-];
 
 function postsToCards(posts: Post[]): TestimonialCardProps[] {
   return posts.slice(0, 3).map((post) => ({
@@ -87,38 +66,54 @@ interface GatePreviewStackProps {
   posts: Post[];
 }
 
-/** Decorative 3-card stack for the landing screen — no interaction */
+const STACK_POSITIONS = [
+  { translate: 0, scale: 1, opacity: 1, z: 30 },
+  { translate: 14, scale: 0.94, opacity: 0.6, z: 20 },
+  { translate: 28, scale: 0.88, opacity: 0.35, z: 10 },
+];
+
+const SPRING = { type: "spring" as const, stiffness: 200, damping: 26, mass: 0.7 };
+
+/** Decorative 3-card depth stack that cycles every 4s */
 export function GatePreviewStack({ posts }: GatePreviewStackProps) {
   const cards = useMemo(() => {
     const built = postsToCards(posts);
     return built.length > 0 ? built : FALLBACK_CARDS;
   }, [posts]);
 
-  return (
-    <div className="gate-preview-stack">
-      <div className="gate-preview-grid">
-        {cards.map((card, index) => {
-          const layout = IDLE_LAYOUTS[index] ?? IDLE_LAYOUTS[0];
+  const [topIndex, setTopIndex] = useState(0);
 
-          return (
-            <motion.div
-              key={`${card.username}-${index}`}
-              className="gate-preview-card-wrap"
-              style={{ zIndex: layout.zIndex, willChange: "transform", pointerEvents: "none", userSelect: "none" }}
-              initial={{ opacity: 0, y: layout.y + 40, scale: 0.95 }}
-              animate={{
-                x: layout.x,
-                y: layout.y,
-                scale: layout.scale,
-                opacity: layout.opacity,
-              }}
-              transition={{ delay: index * 0.07, ...PREVIEW_TRANSITION }}
-            >
-              <TestimonialCard {...card} gatePreview />
-            </motion.div>
-          );
-        })}
-      </div>
+  useEffect(() => {
+    if (cards.length < 2) return;
+    const t = setInterval(() => setTopIndex((p) => (p + 1) % cards.length), 4000);
+    return () => clearInterval(t);
+  }, [cards.length]);
+
+  return (
+    <div className="relative w-[300px] h-[260px]">
+      {cards.map((card, index) => {
+        const stackPos = (index - topIndex + cards.length) % cards.length;
+        const pos = STACK_POSITIONS[stackPos] ?? STACK_POSITIONS[0];
+
+        return (
+          <motion.div
+            key={`${card.username}-${index}`}
+            className="absolute top-0 left-0"
+            style={{ pointerEvents: "none", userSelect: "none" }}
+            initial={{ opacity: 0, y: 40, scale: 0.88 }}
+            animate={{
+              x: pos.translate,
+              y: pos.translate,
+              scale: pos.scale,
+              opacity: pos.opacity,
+              zIndex: pos.z,
+            }}
+            transition={SPRING}
+          >
+            <TestimonialCard {...card} gatePreview />
+          </motion.div>
+        );
+      })}
     </div>
   );
 }
