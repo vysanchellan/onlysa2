@@ -1,4 +1,5 @@
-import { getClout, addClout, getCurrentIdentity, getSessionToken } from "./engagement";
+import { getClout, addClout, getCurrentIdentity } from "./engagement";
+import { getSessionToken } from "./utils";
 import type { LeaderboardEntry } from "./leaderboard";
 
 /* ─── Types ─── */
