@@ -8,6 +8,7 @@ import { HeroSidebar } from "@/components/onlysa/hero-sidebar";
 import { FeedHeader } from "@/components/onlysa/feed-header";
 import { FeedTabsGold } from "@/components/onlysa/feed-tabs-gold";
 import { GlassPostCard } from "@/components/onlysa/glass-post-card";
+import { ChallengeModal } from "@/components/onlysa/challenge-modal";
 import { LuckyDipCard } from "@/components/onlysa/lucky-dip-card";
 import { JourneyModal } from "@/components/onlysa/journey-modal";
 import { AppBottomNav } from "@/components/onlysa/app-bottom-nav";
@@ -41,6 +42,7 @@ export default function Page() {
   const [liveCount, setLiveCount] = useState(47);
   const [liveArea, setLiveArea] = useState("SA");
   const [journeyOpen, setJourneyOpen] = useState(false);
+  const [challengeTarget, setChallengeTarget] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -148,7 +150,7 @@ export default function Page() {
                         );
                       }
                       items.push(
-                        <GlassPostCard key={post.id} post={post} index={i} />
+                        <GlassPostCard key={post.id} post={post} index={i} onChallenge={setChallengeTarget} />
                       );
                       return items;
                     })}
@@ -164,6 +166,11 @@ export default function Page() {
       </AnimatePresence>
 
       <JourneyModal open={journeyOpen} onClose={() => setJourneyOpen(false)} />
+      <ChallengeModal
+        open={!!challengeTarget}
+        onClose={() => setChallengeTarget(null)}
+        challengedIdentity={challengeTarget || ""}
+      />
       {entered && <AppBottomNav />}
     </>
   );

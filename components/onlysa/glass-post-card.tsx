@@ -8,11 +8,10 @@ import { Post } from "@/types";
 import { timeAgo, getSessionToken, truncate } from "@/lib/utils";
 import { CATEGORY_STYLES, formatLocation } from "@/lib/constants";
 import { getAnonId } from "@/lib/engagement";
-import { ChallengeModal } from "@/components/onlysa/challenge-modal";
-
 interface GlassPostCardProps {
   post: Post;
   index?: number;
+  onChallenge?: (identity: string) => void;
 }
 
 function cardSizeClass(length: number, hasGif: boolean): string {
@@ -22,12 +21,11 @@ function cardSizeClass(length: number, hasGif: boolean): string {
   return "card-tall";
 }
 
-export function GlassPostCard({ post, index = 0 }: GlassPostCardProps) {
+export function GlassPostCard({ post, index = 0, onChallenge }: GlassPostCardProps) {
   const [upvotes, setUpvotes] = useState(post.upvotes);
   const [upvoted, setUpvoted] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [gifPaused, setGifPaused] = useState(false);
-  const [challengeTarget, setChallengeTarget] = useState<string | null>(null);
 
   const cat = CATEGORY_STYLES[post.category] ?? CATEGORY_STYLES["Hot Take"];
   const isHot = post.upvotes > 100 || post.isHot;
@@ -185,7 +183,7 @@ export function GlassPostCard({ post, index = 0 }: GlassPostCardProps) {
             <button
               type="button"
               className="premium-action"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setChallengeTarget(post.identity || "Anonymous"); }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChallenge?.(post.identity || "Anonymous"); }}
               aria-label="Challenge"
               title={`Challenge ${post.identity || "Anonymous"}`}
             >
@@ -194,11 +192,6 @@ export function GlassPostCard({ post, index = 0 }: GlassPostCardProps) {
           </footer>
         </div>
       </motion.article>
-      <ChallengeModal
-        open={!!challengeTarget}
-        onClose={() => setChallengeTarget(null)}
-        challengedIdentity={challengeTarget || ""}
-      />
     </>
   );
 }

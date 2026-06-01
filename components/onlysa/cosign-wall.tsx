@@ -55,28 +55,28 @@ function CosignCard({ post }: { post: Post }) {
         </>
       )}
 
-      <div className="flex items-stretch gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => handleAction("cosign")}
           disabled={!!data.userAction}
-          className={`flex items-center justify-center flex-1 py-2 rounded-[10px] text-[10px] font-black tracking-wide uppercase border transition-all duration-200 ${
+          className={`flex items-center justify-center h-8 rounded-[10px] text-[10px] font-black tracking-wide uppercase border transition-all duration-200 ${
             data.userAction?.action === "cosign"
               ? "bg-[rgba(52,211,153,0.2)] border-[#34D399] text-[#34D399]"
               : "border-[rgba(52,211,153,0.3)] text-[rgba(52,211,153,0.7)] hover:bg-[rgba(52,211,153,0.08)] disabled:opacity-30"
           }`}
         >
-          <span className="leading-none">Co-sign</span>
+          Co-sign
         </button>
         <button
           onClick={() => handleAction("cross")}
           disabled={!!data.userAction}
-          className={`flex items-center justify-center flex-1 py-2 rounded-[10px] text-[10px] font-black tracking-wide uppercase border transition-all duration-200 ${
+          className={`flex items-center justify-center h-8 rounded-[10px] text-[10px] font-black tracking-wide uppercase border transition-all duration-200 ${
             data.userAction?.action === "cross"
               ? "bg-[rgba(255,107,107,0.2)] border-[#FF6B6B] text-[#FF6B6B]"
               : "border-[rgba(255,107,107,0.3)] text-[rgba(255,107,107,0.7)] hover:bg-[rgba(255,107,107,0.08)] disabled:opacity-30"
           }`}
         >
-          <span className="leading-none">Cross</span>
+          Cross
         </button>
       </div>
 

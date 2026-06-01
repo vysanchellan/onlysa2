@@ -77,8 +77,7 @@ export function ChallengeModal({ open, onClose, challengedIdentity }: ChallengeM
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 400, damping: 40 }}
-            className="fixed bottom-0 left-0 right-0 z-[210] rounded-[24px_24px_0_0] bg-[#111] border-t border-white/10 p-6 pb-10 max-h-[85vh] overflow-y-auto"
-            style={{ maxWidth: "500px", margin: "0 auto" }}
+            className="fixed bottom-0 left-0 right-0 z-[210] rounded-[24px_24px_0_0] bg-[#111] border-t border-white/10 p-6 pb-10 max-h-[85vh] overflow-y-auto sm:max-w-[500px] sm:mx-auto sm:mb-8 sm:rounded-[24px] sm:shadow-2xl"
           >
             <div className="flex items-center justify-between mb-6">
               <div>
