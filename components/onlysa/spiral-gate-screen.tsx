@@ -99,9 +99,9 @@ export function SpiralGateScreen({ onEnter, posts }: SpiralGateScreenProps) {
                 Just your raw, unfiltered South African voice.
               </p>
 
-              <div className="flex items-start gap-3 pl-3 border-l border-[rgba(245,166,35,0.25)]">
+              <div className="flex items-start gap-3 pl-3 border-l border-[rgba(96,165,250,0.25)]">
                 <div>
-                  <div className="text-[10px] font-[700] tracking-[0.2em] uppercase text-[#F5A623] mb-0.5">
+                  <div className="text-[10px] font-[700] tracking-[0.2em] uppercase text-[#60A5FA] mb-0.5">
                     The Arena
                   </div>
                   <div className="text-[12px] text-[rgba(255,255,255,0.35)] leading-snug">
@@ -122,7 +122,7 @@ export function SpiralGateScreen({ onEnter, posts }: SpiralGateScreenProps) {
                 onClick={onEnter}
                 whileHover={{
                   scale: 1.04,
-                  boxShadow: "0 0 60px rgba(245,166,35,0.25), inset 0 1px 0 rgba(255,255,255,0.1)"
+                  boxShadow: "0 0 60px rgba(96,165,250,0.25), inset 0 1px 0 rgba(255,255,255,0.1)"
                 }}
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
