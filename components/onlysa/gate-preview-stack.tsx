@@ -22,9 +22,9 @@ const PREVIEW_EASE = [0.22, 1, 0.36, 1] as const;
 
 const PREVIEW_TRANSITION = {
   type: "spring" as const,
-  stiffness: 300,
-  damping: 28,
-  mass: 0.5,
+  stiffness: 180,
+  damping: 24,
+  mass: 0.8,
 };
 
 function layoutsForFocus(focus: number | null): CardLayout[] {
@@ -152,14 +152,14 @@ export function GatePreviewStack({ posts }: GatePreviewStackProps) {
               key={`${card.username}-${index}`}
               className="gate-preview-card-wrap"
               style={{ zIndex: layout.zIndex }}
-              initial={false}
+              initial={{ opacity: 0, y: layout.y + 40, scale: 0.95 }}
               animate={{
                 x: layout.x,
                 y: layout.y,
                 scale: layout.scale,
                 opacity: layout.opacity,
               }}
-              transition={PREVIEW_TRANSITION}
+              transition={{ delay: index * 0.07, ...PREVIEW_TRANSITION }}
               onPointerEnter={() => setCardFocus(index)}
             >
               <TestimonialCard

@@ -36,7 +36,7 @@ const CAT_COLORS: Record<string, { dot: string }> = {
   "Neighbourhood Watch":   { dot: "#A070C0" },
 };
 
-const springConfig = { type: "spring" as const, stiffness: 300, damping: 28, mass: 0.5 };
+const springConfig = { type: "spring" as const, stiffness: 180, damping: 24, mass: 0.8 };
 
 const motionEase = [0.22, 1, 0.36, 1];
 
