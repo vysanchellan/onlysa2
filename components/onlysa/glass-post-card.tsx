@@ -201,3 +201,4 @@ export function GlassPostCard({ post, index = 0 }: GlassPostCardProps) {
       />
     </>
   );
+}
