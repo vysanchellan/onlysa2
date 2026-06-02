@@ -1,5 +1,6 @@
 import { SA_IDENTITIES } from "./constants";
 import { getClout, getCurrentIdentity, getTier } from "./engagement";
+import { getSupabase } from "./supabase";
 
 export interface LeaderboardEntry {
   rank: number;
@@ -75,32 +76,72 @@ export function getWeekResetLabel(): string {
   return `Resets in ${d}d ${h}h ${m}m`;
 }
 
-export function fetchLeaderboard(area: LeaderboardArea): LeaderboardEntry[] {
+export async function fetchLeaderboard(area: LeaderboardArea): Promise<LeaderboardEntry[]> {
   const seed = weekSeed();
   const currentIdentity =
     typeof window !== "undefined" ? getCurrentIdentity() : SA_IDENTITIES[0];
   const currentClout = typeof window !== "undefined" ? getClout() : 10;
   const currentTier = getTier(currentClout).name;
 
-  let filteredIds = SA_IDENTITIES.filter((id) => identityMatchesArea(id, area));
-  if (filteredIds.length < 8) filteredIds = [...SA_IDENTITIES];
+  // Try to pull real identities from Supabase
+  let dbIdentities: { identity: string; clout: number; session_token: string }[] = [];
+  const client = getSupabase();
+  if (client) {
+    const { data } = await client
+      .from("identities")
+      .select("identity, clout, session_token")
+      .order("clout", { ascending: false })
+      .limit(50);
+    if (data?.length) {
+      dbIdentities = data as { identity: string; clout: number; session_token: string }[];
+    }
+  }
 
-  const pool = filteredIds
-    .map((identity) => ({
-      identity,
-      cloutScore: mockClout(identity, seed),
-      postCount: mockPosts(identity, seed),
-      tier: getTier(mockClout(identity, seed)).name,
+  let entries: LeaderboardEntry[];
+
+  if (dbIdentities.length > 0) {
+    // Use real identities from DB
+    let pool = dbIdentities.map((row) => ({
+      identity: row.identity || SA_IDENTITIES[0],
+      cloutScore: row.clout,
+      postCount: mockPosts(row.session_token, seed), // fallback until we track post count by session
+      tier: getTier(row.clout).name,
       area: area === "All SA" ? "SA" : area,
-    }))
-    .sort((a, b) => b.cloutScore - a.cloutScore)
-    .slice(0, 50);
+    }));
 
-  const entries: LeaderboardEntry[] = pool.map((row, i) => ({
-    rank: i + 1,
-    ...row,
-    isCurrentUser: row.identity === currentIdentity,
-  }));
+    if (area !== "All SA") {
+      pool = pool.filter((e) => identityMatchesArea(e.identity, area));
+    }
+
+    pool.sort((a, b) => b.cloutScore - a.cloutScore);
+
+    entries = pool.slice(0, 50).map((row, i) => ({
+      rank: i + 1,
+      ...row,
+      isCurrentUser: row.identity === currentIdentity,
+    }));
+  } else {
+    // Fallback to mock data
+    let filteredIds = SA_IDENTITIES.filter((id) => identityMatchesArea(id, area));
+    if (filteredIds.length < 8) filteredIds = [...SA_IDENTITIES];
+
+    const pool = filteredIds
+      .map((identity) => ({
+        identity,
+        cloutScore: mockClout(identity, seed),
+        postCount: mockPosts(identity, seed),
+        tier: getTier(mockClout(identity, seed)).name,
+        area: area === "All SA" ? "SA" : area,
+      }))
+      .sort((a, b) => b.cloutScore - a.cloutScore)
+      .slice(0, 50);
+
+    entries = pool.map((row, i) => ({
+      rank: i + 1,
+      ...row,
+      isCurrentUser: row.identity === currentIdentity,
+    }));
+  }
 
   const userInList = entries.some((e) => e.isCurrentUser);
   if (!userInList) {

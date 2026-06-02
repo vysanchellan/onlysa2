@@ -144,7 +144,7 @@ export default function LeaderboardPage() {
   const [activeBattles, setActiveBattles] = useState(getActiveBattles());
 
   useEffect(() => {
-    setEntries(fetchLeaderboard(area));
+    fetchLeaderboard(area).then(setEntries);
     setResetLabel(getWeekResetLabel());
     const t = setInterval(() => {
       setResetLabel(getWeekResetLabel());

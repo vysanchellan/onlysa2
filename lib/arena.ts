@@ -1,5 +1,6 @@
 import { getClout, addClout, getCurrentIdentity } from "./engagement";
 import { getSessionToken } from "./utils";
+import { getSupabase } from "./supabase";
 import type { LeaderboardEntry } from "./leaderboard";
 
 /* ─── Types ─── */
@@ -96,6 +97,31 @@ function saveBattles(battles: Battle[]) {
   writeJSON(KEYS.battles, battles);
 }
 
+async function syncBattlesToSupabase(battles: Battle[]) {
+  const client = getSupabase();
+  if (!client) return;
+  // Upsert all battles to Supabase (fire-and-forget)
+  for (const b of battles) {
+    void client.from("battles").upsert({
+      id: b.id,
+      challenger_session: b.challengerSession,
+      challenger_identity: b.challengerIdentity,
+      challenged_session: b.challengedSession,
+      challenged_identity: b.challengedIdentity,
+      topic: b.topic,
+      challenger_take: b.challengerTake,
+      challenged_take: b.challengedTake,
+      status: b.status,
+      left_votes: b.leftVotes,
+      right_votes: b.rightVotes,
+      voter_sessions: b.voterSessions,
+      created_at: b.createdAt,
+      expires_at: b.expiresAt,
+      winner_id: b.winnerId,
+    }, { onConflict: "id" });
+  }
+}
+
 export function createBattle(
   challengedIdentity: string,
   topic: string,
@@ -105,13 +131,13 @@ export function createBattle(
   const session = getSessionToken();
   const myIdentity = getCurrentIdentity();
   const now = new Date();
-  const expires = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2h response time
+  const expires = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
   const battle: Battle = {
     id: crypto.randomUUID(),
     challengerSession: session,
     challengerIdentity: myIdentity,
-    challengedSession: challengedIdentity, // simplified — same as identity string
+    challengedSession: challengedIdentity,
     challengedIdentity,
     topic,
     challengerTake,
@@ -127,6 +153,7 @@ export function createBattle(
 
   battles.push(battle);
   saveBattles(battles);
+  syncBattlesToSupabase(battles);
   return battle;
 }
 
@@ -142,12 +169,12 @@ export function respondToBattle(
 
   battle.challengedTake = take;
   battle.status = "active";
-  // Battle now has 24h for voting from response time
   battle.expiresAt = new Date(
     Date.now() + 24 * 60 * 60 * 1000
   ).toISOString();
   battles[idx] = battle;
   saveBattles(battles);
+  syncBattlesToSupabase(battles);
   return battle;
 }
 
@@ -159,13 +186,14 @@ export function voteBattle(battleId: string, side: "left" | "right"): Battle | n
   );
   if (idx === -1) return null;
   const battle = battles[idx];
-  if (battle.voterSessions.includes(session)) return battle; // already voted
+  if (battle.voterSessions.includes(session)) return battle;
 
   battle.voterSessions.push(session);
   if (side === "left") battle.leftVotes += 1;
   else battle.rightVotes += 1;
   battles[idx] = battle;
   saveBattles(battles);
+  syncBattlesToSupabase(battles);
   return battle;
 }
 
@@ -176,11 +204,10 @@ export function closeBattle(battleId: string): Battle | null {
   const battle = battles[idx];
   if (battle.status === "closed") return battle;
 
-  // Auto-close if expired and no response
   if (battle.status === "pending" && new Date() > new Date(battle.expiresAt)) {
     battle.status = "closed";
     battle.winnerId = battle.challengerSession;
-    addClout(100); // default win
+    addClout(100);
   } else if (battle.status === "active") {
     battle.status = "closed";
     battle.winnerId =
@@ -201,6 +228,7 @@ export function closeBattle(battleId: string): Battle | null {
 
   battles[idx] = battle;
   saveBattles(battles);
+  syncBattlesToSupabase(battles);
   return battle;
 }
 
@@ -213,7 +241,6 @@ export function checkExpiredBattles() {
     if (b.status === "closed") continue;
     if (new Date(b.expiresAt) <= now) {
       if (b.status === "pending" && !b.challengedTake) {
-        // challenger wins by default
         battles[i].status = "closed";
         battles[i].winnerId = b.challengerSession;
         changed = true;
@@ -224,7 +251,6 @@ export function checkExpiredBattles() {
       } else if (b.status === "active") {
         const total = b.leftVotes + b.rightVotes;
         if (total === 0) {
-          // draw — no penalty
           battles[i].status = "closed";
           changed = true;
         } else {
@@ -245,7 +271,10 @@ export function checkExpiredBattles() {
       }
     }
   }
-  if (changed) saveBattles(battles);
+  if (changed) {
+    saveBattles(battles);
+    syncBattlesToSupabase(battles);
+  }
 }
 
 export function getActiveBattles(): Battle[] {
@@ -259,8 +288,6 @@ export function hasUserVoted(battle: Battle): boolean {
 }
 
 export function canUserRespond(battle: Battle): boolean {
-  const session = getSessionToken();
-  // Respond if challenged and still pending
   return battle.status === "pending" && !battle.challengedTake;
 }
 
@@ -294,6 +321,19 @@ export function attemptThroneShot(upvotes: number): boolean {
     writeJSON(KEYS.throne, newThrone);
     addClout(500);
     addNotification(`You took the Throne! Defend it.`);
+
+    // Sync throne to Supabase
+    const client = getSupabase();
+    if (client) {
+      void client.from("throne").upsert({
+        session_token: session,
+        identity,
+        clout: getClout(),
+        since: newThrone.since,
+        best_post_upvotes: upvotes,
+      }, { onConflict: "id" });
+    }
+
     return true;
   }
   return false;
@@ -326,31 +366,40 @@ export function submitCosign(postId: string, action: "cosign" | "cross"): {
   const session = getSessionToken();
   if (!store[postId]) store[postId] = {};
   if (store[postId][session]) {
-    // Already voted — return current state
     return {
       cosigns: Object.values(store[postId]).filter((v) => v.action === "cosign").length,
       crosses: Object.values(store[postId]).filter((v) => v.action === "cross").length,
       userAction: store[postId][session],
     };
   }
-  store[postId][session] = { action, timestamp: new Date().toISOString() };
+  const actionEntry: CosignAction = { action, timestamp: new Date().toISOString() };
+  store[postId][session] = actionEntry;
   writeJSON(KEYS.cosigns, store);
+
+  // Sync to Supabase
+  const client = getSupabase();
+  if (client) {
+    void client.from("cosigns").upsert({
+      post_id: postId,
+      session_token: session,
+      action,
+      created_at: actionEntry.timestamp,
+    }, { onConflict: "post_id, session_token" });
+  }
 
   const cosigns = Object.values(store[postId]).filter((v) => v.action === "cosign").length;
   const crosses = Object.values(store[postId]).filter((v) => v.action === "cross").length;
 
-  // SA Certified check
   if (action === "cosign" && cosigns >= 100) {
     addNotification("Your take just hit 100 co-signs. SA Certified.");
   }
 
-  // Ratio'd check
   if (crosses >= cosigns * 3 && crosses >= 3) {
     addClout(-20);
     addNotification("SA has spoken. Your take was crossed 3 to 1. -20 clout.");
   }
 
-  return { cosigns, crosses, userAction: { action, timestamp: new Date().toISOString() } };
+  return { cosigns, crosses, userAction: actionEntry };
 }
 
 /* ─── Notifications ─── */
@@ -361,20 +410,42 @@ export function getNotifications(): Notification[] {
 
 export function addNotification(message: string) {
   const notifications = getNotifications();
-  notifications.unshift({
+  const notif: Notification = {
     id: crypto.randomUUID(),
     message,
     read: false,
     createdAt: new Date().toISOString(),
-  });
+  };
+  notifications.unshift(notif);
   if (notifications.length > 50) notifications.length = 50;
   writeJSON(KEYS.notifications, notifications);
+
+  // Sync to Supabase
+  const client = getSupabase();
+  const session = getSessionToken();
+  if (client && session) {
+    void client.from("notifications").insert({
+      id: notif.id,
+      session_token: session,
+      message,
+      read: false,
+      created_at: notif.createdAt,
+    });
+  }
 }
 
 export function markNotificationsRead() {
   const notifications = getNotifications();
   for (const n of notifications) n.read = true;
   writeJSON(KEYS.notifications, notifications);
+
+  const client = getSupabase();
+  const session = getSessionToken();
+  if (client && session) {
+    void client.from("notifications")
+      .update({ read: true })
+      .eq("session_token", session);
+  }
 }
 
 export function getUnreadCount(): number {

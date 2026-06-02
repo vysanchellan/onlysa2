@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const comments = getCommentsByPost(id);
+  const comments = await getCommentsByPost(id);
   return NextResponse.json({ comments });
 }
 
@@ -28,7 +28,7 @@ export async function POST(
   }
 
   const identity = getRandomIdentity(area || "All SA");
-  const comment = createComment({
+  const comment = await createComment({
     postId: id,
     content,
     identity,

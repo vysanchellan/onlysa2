@@ -9,14 +9,14 @@ export async function GET(request: NextRequest) {
 
   let posts;
   if (tab === "trending") {
-    posts = getTrendingPosts();
+    posts = await getTrendingPosts();
     if (area !== "All SA") posts = posts.filter((p) => p.area === area);
   } else if (tab === "top-rated") {
     const { getTopRatedPosts } = await import("@/lib/store");
-    posts = getTopRatedPosts();
+    posts = await getTopRatedPosts();
     if (area !== "All SA") posts = posts.filter((p) => p.area === area);
   } else {
-    posts = getPostsByArea(area);
+    posts = await getPostsByArea(area);
   }
 
   return NextResponse.json({ posts });
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     const identity = getRandomIdentity(area);
-    const post = createPost({
+    const post = await createPost({
       area,
       category,
       content,

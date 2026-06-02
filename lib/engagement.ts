@@ -1,4 +1,6 @@
 import { SA_IDENTITIES, TIERS } from "./constants";
+import { getSupabase } from "./supabase";
+import { getSessionToken } from "./utils";
 
 const KEYS = {
   clout: "onlysa_clout",
@@ -27,7 +29,9 @@ export function getClout(): number {
 }
 
 export function addClout(amount: number) {
-  write(KEYS.clout, String(getClout() + amount));
+  const newVal = getClout() + amount;
+  write(KEYS.clout, String(newVal));
+  syncIdentityToSupabase();
 }
 
 export function getStreak(): number {
@@ -55,6 +59,7 @@ export function recordPostActivity() {
   write(KEYS.streak, String(streak));
   write(KEYS.lastPost, today);
   addClout(3);
+  syncIdentityToSupabase();
 }
 
 export function getStreakFlames(streak: number): string {
@@ -80,6 +85,7 @@ export function getCurrentIdentity(): string {
     SA_IDENTITIES[Math.floor(Math.random() * SA_IDENTITIES.length)];
   write(KEYS.identity, next);
   write(KEYS.identityAt, String(now));
+  syncIdentityToSupabase();
   return next;
 }
 
@@ -112,4 +118,29 @@ export function getAnonId(): string {
     localStorage.setItem("onlysa_anon_id", id);
   }
   return `ANON ${id}`;
+}
+
+/* ─── Supabase sync ─── */
+
+function syncIdentityToSupabase() {
+  if (typeof window === "undefined") return;
+  const client = getSupabase();
+  if (!client) return;
+  const session = getSessionToken();
+  if (!session) return;
+
+  const clout = getClout();
+  const streak = getStreak();
+  const identity = localStorage.getItem(KEYS.identity) || SA_IDENTITIES[0];
+  const identityAt = localStorage.getItem(KEYS.identityAt) || undefined;
+  const lastPost = localStorage.getItem(KEYS.lastPost) || undefined;
+
+  void client.from("identities").upsert({
+    session_token: session,
+    clout,
+    streak,
+    identity,
+    identity_assigned_at: identityAt,
+    last_post_date: lastPost,
+  }, { onConflict: "session_token" });
 }
