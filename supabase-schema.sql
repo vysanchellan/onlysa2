@@ -110,6 +110,39 @@ CREATE TABLE IF NOT EXISTS throne (
   best_post_upvotes INT NOT NULL DEFAULT 0
 );
 
+/* ─── RLS POLICIES (allow anon key full access) ─── */
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_all_posts" ON posts;
+CREATE POLICY "anon_all_posts" ON posts FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_all_comments" ON comments;
+CREATE POLICY "anon_all_comments" ON comments FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE comment_upvotes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_all_comment_upvotes" ON comment_upvotes;
+CREATE POLICY "anon_all_comment_upvotes" ON comment_upvotes FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE identities ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_all_identities" ON identities;
+CREATE POLICY "anon_all_identities" ON identities FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE battles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_all_battles" ON battles;
+CREATE POLICY "anon_all_battles" ON battles FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE cosigns ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_all_cosigns" ON cosigns;
+CREATE POLICY "anon_all_cosigns" ON cosigns FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_all_notifications" ON notifications;
+CREATE POLICY "anon_all_notifications" ON notifications FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE throne ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "anon_all_throne" ON throne;
+CREATE POLICY "anon_all_throne" ON throne FOR ALL USING (true) WITH CHECK (true);
+
 /* ─── SEED DEFAULT POSTS ─── */
 INSERT INTO posts (id, area, category, identity, content, upvotes, comments, created_at) VALUES
   ('00000000-0000-0000-0000-000000000001', 'Umhlanga', 'Hot Take', 'ANON 992', 'Hot take: Woolies water doesn''t even taste that good. You guys are just paying for the aesthetic bottle.', 215, 84, now() - interval '2 hours'),
