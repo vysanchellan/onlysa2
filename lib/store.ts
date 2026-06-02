@@ -47,7 +47,9 @@ async function loadPosts(): Promise<Post[]> {
       .from("posts")
       .select("*")
       .order("created_at", { ascending: false });
-    if (!error && data?.length) {
+    if (error) {
+      console.error("[store] Supabase posts query failed:", error.message);
+    } else if (data?.length) {
       postsCache = data.map(mapPost);
     }
   }

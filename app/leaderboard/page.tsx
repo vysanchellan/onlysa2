@@ -16,6 +16,7 @@ import { ChallengeModal } from "@/components/onlysa/challenge-modal";
 import { CosignWall } from "@/components/onlysa/cosign-wall";
 import { AppBottomNav } from "@/components/onlysa/app-bottom-nav";
 import { getActiveBattles, getMockTopPosts } from "@/lib/arena";
+import type { Battle } from "@/lib/arena";
 
 function rankColor(rank: number): string {
   if (rank === 1) return "#F5A623";
@@ -141,14 +142,15 @@ export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [resetLabel, setResetLabel] = useState("");
   const [challengeTarget, setChallengeTarget] = useState<string | null>(null);
-  const [activeBattles, setActiveBattles] = useState(getActiveBattles());
+  const [activeBattles, setActiveBattles] = useState<Battle[]>([]);
 
   useEffect(() => {
     fetchLeaderboard(area).then(setEntries);
+    getActiveBattles().then(setActiveBattles);
     setResetLabel(getWeekResetLabel());
     const t = setInterval(() => {
       setResetLabel(getWeekResetLabel());
-      setActiveBattles(getActiveBattles());
+      getActiveBattles().then(setActiveBattles);
     }, 10_000);
     return () => clearInterval(t);
   }, [area]);

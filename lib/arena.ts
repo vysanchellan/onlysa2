@@ -87,9 +87,40 @@ function writeJSON(key: string, value: unknown) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+/* ─── Supabase mapper ─── */
+
+function mapDbBattle(d: Record<string, unknown>): Battle {
+  return {
+    id: d.id as string,
+    challengerSession: d.challenger_session as string,
+    challengerIdentity: d.challenger_identity as string,
+    challengedSession: d.challenged_session as string,
+    challengedIdentity: d.challenged_identity as string,
+    topic: d.topic as string,
+    challengerTake: d.challenger_take as string,
+    challengedTake: (d.challenged_take as string) || null,
+    status: d.status as Battle["status"],
+    leftVotes: (d.left_votes as number) ?? 0,
+    rightVotes: (d.right_votes as number) ?? 0,
+    voterSessions: (d.voter_sessions as string[]) || [],
+    createdAt: d.created_at as string,
+    expiresAt: d.expires_at as string,
+    winnerId: (d.winner_id as string) || null,
+  };
+}
+
+function mapDbNotification(d: Record<string, unknown>): Notification {
+  return {
+    id: d.id as string,
+    message: d.message as string,
+    read: (d.read as boolean) ?? false,
+    createdAt: d.created_at as string,
+  };
+}
+
 /* ─── Battles ─── */
 
-export function getBattles(): Battle[] {
+export function getLocalBattles(): Battle[] {
   return readJSON<Battle[]>(KEYS.battles, []);
 }
 
@@ -97,10 +128,40 @@ function saveBattles(battles: Battle[]) {
   writeJSON(KEYS.battles, battles);
 }
 
+// Fetch battles from Supabase for the current user
+export async function fetchBattlesFromSupabase(): Promise<Battle[]> {
+  const client = getSupabase();
+  if (!client) return [];
+  const session = getSessionToken();
+  if (!session) return [];
+  const { data } = await client
+    .from("battles")
+    .select("*")
+    .or(`challenger_session.eq.${session},challenged_session.eq.${session}`)
+    .order("created_at", { ascending: false });
+  if (!data) return [];
+  return data.map(mapDbBattle);
+}
+
+// Get all battles — merge localStorage with Supabase data
+export async function getBattles(): Promise<Battle[]> {
+  const local = getLocalBattles();
+  const remote = await fetchBattlesFromSupabase();
+  if (!remote.length) return local;
+  // Merge: remote wins, keep local entries not yet in remote
+  const remoteIds = new Set(remote.map((b) => b.id));
+  const merged = [...remote];
+  for (const b of local) {
+    if (!remoteIds.has(b.id)) merged.push(b);
+  }
+  // Update localStorage cache
+  writeJSON(KEYS.battles, merged);
+  return merged;
+}
+
 async function syncBattlesToSupabase(battles: Battle[]) {
   const client = getSupabase();
   if (!client) return;
-  // Upsert all battles to Supabase (fire-and-forget)
   for (const b of battles) {
     void client.from("battles").upsert({
       id: b.id,
@@ -127,7 +188,7 @@ export function createBattle(
   topic: string,
   challengerTake: string
 ): Battle {
-  const battles = getBattles();
+  const local = getLocalBattles();
   const session = getSessionToken();
   const myIdentity = getCurrentIdentity();
   const now = new Date();
@@ -151,9 +212,9 @@ export function createBattle(
     winnerId: null,
   };
 
-  battles.push(battle);
-  saveBattles(battles);
-  syncBattlesToSupabase(battles);
+  local.push(battle);
+  saveBattles(local);
+  syncBattlesToSupabase(local);
   return battle;
 }
 
@@ -161,10 +222,10 @@ export function respondToBattle(
   battleId: string,
   take: string
 ): Battle | null {
-  const battles = getBattles();
-  const idx = battles.findIndex((b) => b.id === battleId);
+  const local = getLocalBattles();
+  const idx = local.findIndex((b) => b.id === battleId);
   if (idx === -1) return null;
-  const battle = battles[idx];
+  const battle = local[idx];
   if (battle.status !== "pending") return null;
 
   battle.challengedTake = take;
@@ -172,36 +233,36 @@ export function respondToBattle(
   battle.expiresAt = new Date(
     Date.now() + 24 * 60 * 60 * 1000
   ).toISOString();
-  battles[idx] = battle;
-  saveBattles(battles);
-  syncBattlesToSupabase(battles);
+  local[idx] = battle;
+  saveBattles(local);
+  syncBattlesToSupabase(local);
   return battle;
 }
 
 export function voteBattle(battleId: string, side: "left" | "right"): Battle | null {
   const session = getSessionToken();
-  const battles = getBattles();
-  const idx = battles.findIndex(
+  const local = getLocalBattles();
+  const idx = local.findIndex(
     (b) => b.id === battleId && b.status === "active"
   );
   if (idx === -1) return null;
-  const battle = battles[idx];
+  const battle = local[idx];
   if (battle.voterSessions.includes(session)) return battle;
 
   battle.voterSessions.push(session);
   if (side === "left") battle.leftVotes += 1;
   else battle.rightVotes += 1;
-  battles[idx] = battle;
-  saveBattles(battles);
-  syncBattlesToSupabase(battles);
+  local[idx] = battle;
+  saveBattles(local);
+  syncBattlesToSupabase(local);
   return battle;
 }
 
 export function closeBattle(battleId: string): Battle | null {
-  const battles = getBattles();
-  const idx = battles.findIndex((b) => b.id === battleId);
+  const local = getLocalBattles();
+  const idx = local.findIndex((b) => b.id === battleId);
   if (idx === -1) return null;
-  const battle = battles[idx];
+  const battle = local[idx];
   if (battle.status === "closed") return battle;
 
   if (battle.status === "pending" && new Date() > new Date(battle.expiresAt)) {
@@ -226,23 +287,23 @@ export function closeBattle(battleId: string): Battle | null {
     );
   }
 
-  battles[idx] = battle;
-  saveBattles(battles);
-  syncBattlesToSupabase(battles);
+  local[idx] = battle;
+  saveBattles(local);
+  syncBattlesToSupabase(local);
   return battle;
 }
 
 export function checkExpiredBattles() {
-  const battles = getBattles();
+  const local = getLocalBattles();
   const now = new Date();
   let changed = false;
-  for (let i = 0; i < battles.length; i++) {
-    const b = battles[i];
+  for (let i = 0; i < local.length; i++) {
+    const b = local[i];
     if (b.status === "closed") continue;
     if (new Date(b.expiresAt) <= now) {
       if (b.status === "pending" && !b.challengedTake) {
-        battles[i].status = "closed";
-        battles[i].winnerId = b.challengerSession;
+        local[i].status = "closed";
+        local[i].winnerId = b.challengerSession;
         changed = true;
         addClout(100);
         addNotification(
@@ -251,15 +312,15 @@ export function checkExpiredBattles() {
       } else if (b.status === "active") {
         const total = b.leftVotes + b.rightVotes;
         if (total === 0) {
-          battles[i].status = "closed";
+          local[i].status = "closed";
           changed = true;
         } else {
           const winner =
             b.leftVotes >= b.rightVotes
               ? b.challengerSession
               : b.challengedSession;
-          battles[i].status = "closed";
-          battles[i].winnerId = winner;
+          local[i].status = "closed";
+          local[i].winnerId = winner;
           changed = true;
           const name =
             winner === b.challengerSession
@@ -272,14 +333,14 @@ export function checkExpiredBattles() {
     }
   }
   if (changed) {
-    saveBattles(battles);
-    syncBattlesToSupabase(battles);
+    saveBattles(local);
+    syncBattlesToSupabase(local);
   }
 }
 
-export function getActiveBattles(): Battle[] {
-  checkExpiredBattles();
-  return getBattles().filter((b) => b.status === "active" || b.status === "pending");
+export async function getActiveBattles(): Promise<Battle[]> {
+  const all = await getBattles();
+  return all.filter((b) => b.status === "active" || b.status === "pending");
 }
 
 export function hasUserVoted(battle: Battle): boolean {
@@ -322,7 +383,6 @@ export function attemptThroneShot(upvotes: number): boolean {
     addClout(500);
     addNotification(`You took the Throne! Defend it.`);
 
-    // Sync throne to Supabase
     const client = getSupabase();
     if (client) {
       void client.from("throne").upsert({
@@ -376,7 +436,6 @@ export function submitCosign(postId: string, action: "cosign" | "cross"): {
   store[postId][session] = actionEntry;
   writeJSON(KEYS.cosigns, store);
 
-  // Sync to Supabase
   const client = getSupabase();
   if (client) {
     void client.from("cosigns").upsert({
@@ -404,23 +463,51 @@ export function submitCosign(postId: string, action: "cosign" | "cross"): {
 
 /* ─── Notifications ─── */
 
-export function getNotifications(): Notification[] {
+export function getLocalNotifications(): Notification[] {
   return readJSON<Notification[]>(KEYS.notifications, []);
 }
 
+// Fetch notifications from Supabase for the current user
+export async function fetchNotificationsFromSupabase(): Promise<Notification[]> {
+  const client = getSupabase();
+  if (!client) return [];
+  const session = getSessionToken();
+  if (!session) return [];
+  const { data } = await client
+    .from("notifications")
+    .select("*")
+    .eq("session_token", session)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (!data) return [];
+  return data.map(mapDbNotification);
+}
+
+export async function getNotifications(): Promise<Notification[]> {
+  const local = getLocalNotifications();
+  const remote = await fetchNotificationsFromSupabase();
+  if (!remote.length) return local;
+  const remoteIds = new Set(remote.map((n) => n.id));
+  const merged = [...remote];
+  for (const n of local) {
+    if (!remoteIds.has(n.id)) merged.push(n);
+  }
+  writeJSON(KEYS.notifications, merged);
+  return merged;
+}
+
 export function addNotification(message: string) {
-  const notifications = getNotifications();
+  const local = getLocalNotifications();
   const notif: Notification = {
     id: crypto.randomUUID(),
     message,
     read: false,
     createdAt: new Date().toISOString(),
   };
-  notifications.unshift(notif);
-  if (notifications.length > 50) notifications.length = 50;
-  writeJSON(KEYS.notifications, notifications);
+  local.unshift(notif);
+  if (local.length > 50) local.length = 50;
+  writeJSON(KEYS.notifications, local);
 
-  // Sync to Supabase
   const client = getSupabase();
   const session = getSessionToken();
   if (client && session) {
@@ -435,9 +522,9 @@ export function addNotification(message: string) {
 }
 
 export function markNotificationsRead() {
-  const notifications = getNotifications();
-  for (const n of notifications) n.read = true;
-  writeJSON(KEYS.notifications, notifications);
+  const local = getLocalNotifications();
+  for (const n of local) n.read = true;
+  writeJSON(KEYS.notifications, local);
 
   const client = getSupabase();
   const session = getSessionToken();
@@ -448,8 +535,9 @@ export function markNotificationsRead() {
   }
 }
 
-export function getUnreadCount(): number {
-  return getNotifications().filter((n) => !n.read).length;
+export async function getUnreadCount(): Promise<number> {
+  const all = await getNotifications();
+  return all.filter((n) => !n.read).length;
 }
 
 /* ─── Mock top posts for Cosign Wall ─── */
