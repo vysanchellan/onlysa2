@@ -8,6 +8,7 @@ import { PageBackLink } from "@/components/onlysa/page-back-link";
 import { POST_AREA_NAMES, ROTATING_PLACEHOLDERS } from "@/lib/constants";
 import { POST_CATEGORIES } from "@/lib/post-categories";
 import { getClout, getCurrentIdentity, recordPostActivity } from "@/lib/engagement";
+import { insertPost } from "@/lib/supabase-client";
 import { getSessionToken } from "@/lib/utils";
 import { GifPickerModal, type GifResult } from "@/components/onlysa/gif-picker-modal";
 import { JourneyModal } from "@/components/onlysa/journey-modal";
@@ -79,6 +80,8 @@ export function PostCompositionForm({ onSubmitted }: PostCompositionFormProps) {
     if (content.trim().length < 10) return;
 
     setSubmitting(true);
+    const sessionToken = getSessionToken();
+
     try {
       const res = await fetch("/api/posts", {
         method: "POST",
@@ -87,20 +90,36 @@ export function PostCompositionForm({ onSubmitted }: PostCompositionFormProps) {
           area,
           category: category.apiName,
           content,
-          sessionToken: getSessionToken(),
+          sessionToken,
           gifUrl: gif?.url,
           gifPreview: gif?.preview,
         }),
       });
       if (!res.ok) throw new Error("fail");
-      recordPostActivity();
-      onSubmitted?.();
-      router.push("/");
     } catch {
-      alert("Eskom took the servers. Again. Try once more, boet.");
-    } finally {
-      setSubmitting(false);
+      // API failed — try direct Supabase insert from client
+      const ok = await insertPost({
+        id: crypto.randomUUID(),
+        area,
+        category: category.apiName,
+        identity: getCurrentIdentity(),
+        content,
+        session_token: sessionToken,
+        created_at: new Date().toISOString(),
+        gif_url: gif?.url,
+        gif_preview: gif?.preview,
+      });
+      if (!ok) {
+        alert("Eskom took the servers. Again. Try once more, boet.");
+        setSubmitting(false);
+        return;
+      }
     }
+
+    recordPostActivity();
+    onSubmitted?.();
+    router.push("/");
+    setSubmitting(false);
   }
 
   let counterClass = "composition-counter";

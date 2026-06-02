@@ -13,6 +13,7 @@ import { LuckyDipCard } from "@/components/onlysa/lucky-dip-card";
 import { JourneyModal } from "@/components/onlysa/journey-modal";
 import { AppBottomNav } from "@/components/onlysa/app-bottom-nav";
 import { hydrateFromSupabase } from "@/lib/engagement";
+import { fetchPosts as fetchClientPosts } from "@/lib/supabase-client";
 
 type Tab = "recent" | "trending" | "top-rated";
 
@@ -51,10 +52,39 @@ export default function Page() {
     if (seen === "1") setEntered(true);
 
     hydrateFromSupabase();
+
+    // Fetch from API first (server-side), fall back to client-side Supabase
     fetch("/api/posts")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (d?.posts?.length) setPosts(d.posts);
+        if (d?.posts?.length) {
+          setPosts(d.posts);
+        } else {
+          // API returned nothing — try direct Supabase
+          return fetchClientPosts();
+        }
+      })
+      .then((clientPosts) => {
+        if (clientPosts?.length) {
+          // Map to Post type
+          setPosts(clientPosts.map((p) => ({
+            id: p.id,
+            area: p.area,
+            category: p.category,
+            identity: p.identity,
+            content: p.content,
+            upvotes: p.upvotes ?? 0,
+            comments: p.comments ?? 0,
+            createdAt: p.created_at,
+            sessionToken: p.session_token,
+            upvotedBy: p.upvoted_by || [],
+            gifUrl: p.gif_url,
+            gifPreview: p.gif_preview,
+            province: p.province,
+            isHot: p.is_hot,
+            approved: p.approved ?? true,
+          })));
+        }
       })
       .catch(() => {});
   }, []);
