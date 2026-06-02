@@ -24,6 +24,36 @@ function write(key: string, value: string) {
   localStorage.setItem(key, value);
 }
 
+/* ─── Hydrate from Supabase on app init ─── */
+
+export async function hydrateFromSupabase(): Promise<void> {
+  if (typeof window === "undefined") return;
+  const client = getSupabase();
+  if (!client) return;
+  const session = getSessionToken();
+  if (!session) return;
+
+  const { data } = await client
+    .from("identities")
+    .select("*")
+    .eq("session_token", session)
+    .single();
+
+  if (data) {
+    write(KEYS.clout, String((data.clout as number) ?? 10));
+    write(KEYS.streak, String((data.streak as number) ?? 1));
+    if (data.last_post_date) write(KEYS.lastPost, data.last_post_date as string);
+    if (data.identity) {
+      write(KEYS.identity, data.identity as string);
+      if (data.identity_assigned_at) {
+        write(KEYS.identityAt, data.identity_assigned_at as string);
+      }
+    }
+  }
+}
+
+/* ─── Clout ─── */
+
 export function getClout(): number {
   return readNum(KEYS.clout, 10);
 }
@@ -33,6 +63,8 @@ export function addClout(amount: number) {
   write(KEYS.clout, String(newVal));
   syncIdentityToSupabase();
 }
+
+/* ─── Streak ─── */
 
 export function getStreak(): number {
   return readNum(KEYS.streak, 1);
@@ -69,6 +101,8 @@ export function getStreakFlames(streak: number): string {
   return "";
 }
 
+/* ─── Identity ─── */
+
 export function getCurrentIdentity(): string {
   if (typeof window === "undefined") return SA_IDENTITIES[0];
 
@@ -88,6 +122,8 @@ export function getCurrentIdentity(): string {
   syncIdentityToSupabase();
   return next;
 }
+
+/* ─── Tier ─── */
 
 export function getTier(clout = getClout()) {
   let tier: (typeof TIERS)[number] = TIERS[0];
@@ -109,6 +145,8 @@ export function getTierProgress(clout = getClout()) {
     nextLabel: next.name,
   };
 }
+
+/* ─── Anon ID ─── */
 
 export function getAnonId(): string {
   if (typeof window === "undefined") return "ANON 000";

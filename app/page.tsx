@@ -12,6 +12,7 @@ import { ChallengeModal } from "@/components/onlysa/challenge-modal";
 import { LuckyDipCard } from "@/components/onlysa/lucky-dip-card";
 import { JourneyModal } from "@/components/onlysa/journey-modal";
 import { AppBottomNav } from "@/components/onlysa/app-bottom-nav";
+import { hydrateFromSupabase } from "@/lib/engagement";
 
 type Tab = "recent" | "trending" | "top-rated";
 
@@ -49,6 +50,7 @@ export default function Page() {
     const seen = sessionStorage.getItem("onlysa_entered");
     if (seen === "1") setEntered(true);
 
+    hydrateFromSupabase();
     fetch("/api/posts")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
